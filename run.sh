@@ -5,11 +5,21 @@
 
 set -e
 
-IMAGE_NAME="mission-planner"
-TAG="latest"
+# Use GHCR image by default, fallback to local image
+GHCR_IMAGE="ghcr.io/iftahnaf/linux_mission_planner:latest"
+LOCAL_IMAGE="mission-planner:latest"
 CONTAINER_NAME="mission-planner-container"
 
 echo "Starting Mission Planner container..."
+
+# Try to use GHCR image first, fallback to local
+if docker pull "$GHCR_IMAGE" 2>/dev/null; then
+    IMAGE_NAME="$GHCR_IMAGE"
+    echo "Using pre-built image from GitHub Container Registry"
+else
+    IMAGE_NAME="$LOCAL_IMAGE"
+    echo "Using local image (run ./build.sh first if not available)"
+fi
 
 # Check if container is already running
 if docker ps -q -f name="${CONTAINER_NAME}" | grep -q .; then
@@ -39,7 +49,7 @@ docker run -it \
     -v /dev:/dev \
     --device-cgroup-rule='c *:* rmw' \
     --network host \
-    "${IMAGE_NAME}:${TAG}"
+    "${IMAGE_NAME}"
 
 echo "Mission Planner container has stopped."
 
